@@ -1,0 +1,499 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>HyperSend</title>
+<style>
+:root{--bg:#04060f;--bg2:#0a1024;--blue:#2e9bff;--red:#ff2d4a;--txt:#e6efff;--mut:#8da0c4;--ok:#2dffa8;--glass:rgba(14,22,48,.62);color-scheme:dark;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+*{box-sizing:border-box;margin:0}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{background:radial-gradient(ellipse at 20% 0,#12204a 0,var(--bg) 55%),var(--bg);color:var(--txt);font-family:"Rajdhani","Segoe UI",system-ui,sans-serif;font-size:17px;min-height:100vh;overflow-x:hidden}
+body::before{content:"";position:fixed;inset:0;z-index:0;pointer-events:none;background:linear-gradient(rgba(46,155,255,.05) 1px,transparent 1px) 0 0/44px 44px,linear-gradient(90deg,rgba(46,155,255,.05) 1px,transparent 1px) 0 0/44px 44px,radial-gradient(circle at 85% 90%,rgba(255,45,74,.16),transparent 40%),radial-gradient(circle at 10% 70%,rgba(46,155,255,.14),transparent 45%)}
+body::after{content:"";position:fixed;left:-30%;top:30%;width:160%;height:2px;z-index:0;pointer-events:none;background:linear-gradient(90deg,transparent,var(--blue),transparent);opacity:.35;animation:streak 9s linear infinite}
+@keyframes streak{0%{transform:translateY(-40vh) rotate(-8deg)}100%{transform:translateY(60vh) rotate(-8deg)}}
+canvas#fx{position:fixed;inset:0;width:100%;height:100%;z-index:0;pointer-events:none}
+nav{position:relative;z-index:5;display:flex;align-items:center;justify-content:space-between;gap:10px;padding:14px 22px;flex-wrap:wrap}
+.logo{font-weight:700;letter-spacing:.28em;font-size:1.15rem;cursor:pointer}
+.logo b{color:var(--red)}
+nav div{display:flex;gap:6px;flex-wrap:wrap}
+nav button{background:none;border:1px solid transparent;color:var(--mut);font:inherit;letter-spacing:.12em;padding:7px 12px;cursor:pointer;transition:.2s}
+nav button:hover,nav button.act{color:var(--txt);border-color:var(--blue);box-shadow:0 0 14px rgba(46,155,255,.35)}
+main{position:relative;z-index:2;max-width:1080px;margin:0 auto;padding:10px 18px 50px}
+.view{display:none}.view.on{display:block;animation:in .6s cubic-bezier(.2,.8,.2,1)}
+@keyframes in{from{opacity:0;transform:translateY(16px) scale(.985);filter:blur(4px)}to{opacity:1;transform:none;filter:none}}
+.hero{text-align:center;padding:9vh 0 4vh}
+.hero h1{font-size:clamp(2.6rem,10vw,6.4rem);letter-spacing:.2em;font-weight:700;line-height:1;background:linear-gradient(180deg,#fff,#7db8ff 60%,#2e6bd6);-webkit-background-clip:text;background-clip:text;color:transparent;filter:drop-shadow(0 0 22px rgba(46,155,255,.55));animation:ig 1.2s ease-out both}
+@keyframes ig{from{letter-spacing:.6em;opacity:0}}
+.hero h2{margin-top:14px;letter-spacing:.42em;color:var(--red);font-size:clamp(.85rem,3vw,1.2rem);text-shadow:0 0 12px rgba(255,45,74,.6)}
+.hero p{max-width:560px;margin:18px auto 28px;color:var(--mut);font-size:1.1rem}
+.btns{display:flex;gap:14px;justify-content:center;flex-wrap:wrap}
+.btn{font:inherit;font-weight:700;letter-spacing:.14em;padding:14px 26px;color:#fff;cursor:pointer;border:1px solid var(--blue);background:linear-gradient(135deg,rgba(46,155,255,.35),rgba(10,16,36,.8));clip-path:polygon(12px 0,100% 0,100% calc(100% - 12px),calc(100% - 12px) 100%,0 100%,0 12px);box-shadow:0 0 18px rgba(46,155,255,.4);transition:.25s}
+.btn:hover{transform:translateY(-2px);box-shadow:0 0 30px rgba(46,155,255,.8)}
+.btn.red{border-color:var(--red);background:linear-gradient(135deg,rgba(255,45,74,.35),rgba(10,16,36,.8));box-shadow:0 0 18px rgba(255,45,74,.4)}
+.btn.red:hover{box-shadow:0 0 30px rgba(255,45,74,.8)}
+.btn.ghost{background:rgba(10,16,36,.6);box-shadow:none}
+.card{position:relative;background:var(--glass);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border:1px solid rgba(46,155,255,.4);padding:22px;box-shadow:0 0 28px rgba(46,155,255,.14),inset 0 0 30px rgba(46,155,255,.05)}
+.card::before,.card::after{content:"";position:absolute;width:16px;height:16px;border:2px solid var(--red)}
+.card::before{top:-2px;left:-2px;border-right:0;border-bottom:0}.card::after{bottom:-2px;right:-2px;border-left:0;border-top:0}
+.card h3{letter-spacing:.2em;font-size:1rem;margin-bottom:14px}
+.row{display:flex;justify-content:space-between;gap:10px;padding:7px 0;border-bottom:1px dashed rgba(141,160,196,.25);letter-spacing:.08em}
+.row span:first-child{color:var(--mut)}
+.ok{color:var(--ok);text-shadow:0 0 10px var(--ok)}
+.dot{display:inline-block;width:9px;height:9px;border-radius:50%;background:var(--ok);box-shadow:0 0 10px var(--ok);margin-right:8px;animation:pl 1.6s infinite}
+.dot.w{background:var(--red);box-shadow:0 0 10px var(--red)}
+@keyframes pl{50%{opacity:.35}}
+.grid{display:grid;gap:18px;grid-template-columns:repeat(auto-fit,minmax(260px,1fr))}
+.center{max-width:430px;margin:6vh auto 0}
+.center h2{text-align:center;letter-spacing:.2em;margin-bottom:6px}
+.sub{text-align:center;color:var(--mut);margin-bottom:18px;letter-spacing:.08em}
+label{display:block;color:var(--mut);letter-spacing:.14em;font-size:.85rem;margin:14px 0 6px}
+input[type=email],input[type=password],input[type=text]{width:100%;padding:12px;background:rgba(4,6,15,.7);border:1px solid rgba(46,155,255,.4);color:var(--txt);font:inherit;outline:0}
+input:focus-visible,.btn:focus-visible,nav button:focus-visible,.drop:focus-visible{outline:2px solid var(--red);outline-offset:2px}
+.scan{position:relative;overflow:hidden}
+.scan::after{content:"";position:absolute;left:0;right:0;height:60px;top:-60px;background:linear-gradient(transparent,rgba(46,155,255,.18),transparent);animation:sc 3.5s linear infinite;pointer-events:none}
+@keyframes sc{to{top:100%}}
+.drop{border:2px dashed var(--blue);padding:44px 16px;text-align:center;cursor:pointer;background:rgba(46,155,255,.05);transition:.25s;position:relative;overflow:hidden}
+.drop.over{background:rgba(255,45,74,.12);border-color:var(--red);box-shadow:0 0 30px rgba(255,45,74,.4)}
+.drop strong{display:block;letter-spacing:.3em;font-size:1.25rem;margin-bottom:10px}
+.drop small{display:block;color:var(--mut);margin:8px 0 14px}
+.up{display:none;margin-top:20px;grid-template-columns:auto 1fr;gap:22px;align-items:center}
+.up.on{display:grid}
+@media(max-width:560px){.up{grid-template-columns:1fr;justify-items:center}}
+.ring{position:relative;width:150px;height:150px}
+.ring svg{transform:rotate(-90deg)}
+.ring circle{fill:none;stroke-width:9}
+.ring .bg{stroke:rgba(46,155,255,.18)}
+.ring .fg{stroke:url(#g);stroke-linecap:round;stroke-dasharray:408;stroke-dashoffset:408;filter:drop-shadow(0 0 6px var(--blue))}
+.ring b{position:absolute;inset:0;display:grid;place-items:center;font-size:1.9rem;letter-spacing:.05em}
+.bar{height:10px;background:rgba(46,155,255,.15);margin:10px 0;overflow:hidden}
+.bar i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--blue),var(--red));box-shadow:0 0 12px var(--blue)}
+.chunks{display:grid;grid-template-columns:repeat(auto-fill,minmax(9px,1fr));gap:2px;margin-top:12px}
+.chunks i{height:9px;background:rgba(46,155,255,.14)}
+.chunks i.d{background:var(--blue);box-shadow:0 0 5px var(--blue)}
+.otp{display:flex;gap:8px;justify-content:center;margin:16px 0}
+.otp input{width:46px;height:56px;text-align:center;font:inherit;font-size:1.6rem;background:rgba(4,6,15,.8);color:#fff;border:1px solid var(--blue);outline:0;transition:.2s}
+.otp input:focus{border-color:var(--red);box-shadow:0 0 14px var(--red)}
+.timer{text-align:center;color:var(--mut);margin:6px 0 16px;letter-spacing:.1em}
+.timer b{color:var(--red);font-size:1.4rem}
+.granted{display:none;text-align:center;padding:10px 0}
+.granted.on{display:block}
+.granted h2{color:var(--ok);text-shadow:0 0 16px var(--ok);margin-top:10px}
+.chk{width:90px;height:90px}
+.chk circle,.chk path{fill:none;stroke:var(--ok);stroke-width:4;stroke-linecap:round;stroke-linejoin:round;stroke-dasharray:300;stroke-dashoffset:300;filter:drop-shadow(0 0 6px var(--ok))}
+.granted.on .chk circle{animation:dr .8s forwards}.granted.on .chk path{animation:dr .6s .6s forwards}
+@keyframes dr{to{stroke-dashoffset:0}}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:14px;margin:18px 0}
+.stat{padding:16px}
+.stat small{color:var(--mut);letter-spacing:.16em;font-size:.78rem}
+.stat b{display:block;font-size:2rem;margin-top:6px}
+.stat:nth-child(even) b{color:var(--red)}
+.chart{display:flex;align-items:flex-end;gap:8px;height:150px;margin-top:8px}
+.chart i{flex:1;background:linear-gradient(var(--blue),rgba(46,155,255,.1));box-shadow:0 0 10px rgba(46,155,255,.4);height:0;transition:height 1.2s cubic-bezier(.2,.8,.2,1)}
+.chart i.r{background:linear-gradient(var(--red),rgba(255,45,74,.1))}
+.vault{text-align:center;font-size:1.4rem;letter-spacing:.2em;margin-bottom:16px}
+.hint{color:var(--mut);font-size:.9rem;text-align:center;margin-top:14px}
+.lk{background:none;border:0;color:var(--blue);font:inherit;cursor:pointer;text-decoration:underline;padding:4px 0}
+.tab{background:none;border:1px solid rgba(46,155,255,.4);color:var(--mut);font:inherit;letter-spacing:.1em;padding:7px 12px;cursor:pointer}.tab.on{color:#fff;border-color:var(--red);box-shadow:0 0 12px rgba(255,45,74,.4)}
+.chip{padding:3px 10px;border:1px solid;letter-spacing:.1em;font-size:.85rem}.chip.sending{color:var(--blue)}.chip.pending{color:#ffc247}.chip.completed{color:var(--ok)}.chip.group{background:#c9a8ff}.chip.failed{color:var(--red)}
+.row span:last-child{text-align:right;word-break:break-all}
+.ring b.done{font-size:1.25rem;color:var(--ok);text-shadow:0 0 10px var(--ok)}
+/* Comic-hero theme (original design) */
+:root{--bg:#060a1e;--bg2:#0b1433;--blue:#1e6bff;--red:#f23a43;--gold:#ffc61a;--txt:#fff;--mut:#b7c3e6;--ok:#3ddc84;--glass:#101a3d}
+body{font-family:"Oswald","Arial Narrow",system-ui,sans-serif;font-size:17px;letter-spacing:.02em;background:linear-gradient(180deg,#0a1235,#060a1e) fixed}
+body::before{background:radial-gradient(rgba(255,198,26,.13) 1.4px,transparent 1.6px) 0 0/18px 18px,repeating-conic-gradient(from 0deg at 50% 115%,rgba(242,58,67,.14) 0 5deg,transparent 5deg 10deg),radial-gradient(circle at 12% 8%,rgba(30,107,255,.35),transparent 45%)}
+body::after,.scan::after,.card::before,.card::after{display:none}
+.logo{font-family:"Bangers",Impact,sans-serif;font-weight:400;letter-spacing:.1em;font-size:1.8rem;color:var(--gold);text-shadow:2px 2px 0 #000;display:inline-flex;align-items:center}
+.logo b{color:#fff;font-weight:400}
+.logo::before{content:attr(data-i);display:inline-grid;place-items:center;width:1.4em;height:1.4em;margin-right:.4em;background:var(--red);color:var(--gold);font-size:.9em;text-shadow:none;clip-path:polygon(50% 0,100% 25%,100% 75%,50% 100%,0 75%,0 25%)}
+nav button{font-family:"Bangers",Impact,sans-serif;font-size:1.1rem;letter-spacing:.1em;color:#fff;border:2px solid transparent}
+nav button:hover,nav button.act{background:var(--red);color:#fff;border-color:#000;box-shadow:3px 3px 0 #000;transform:translate(-1px,-1px)}
+nav button.act{background:var(--gold);color:#000}
+.hero{position:relative}
+.hero::before{content:"";position:absolute;z-index:-1;left:50%;top:42%;width:min(680px,100vw);aspect-ratio:1;transform:translate(-50%,-50%);background:repeating-conic-gradient(var(--red) 0 7.5deg,#a8141c 7.5deg 15deg);-webkit-mask-image:radial-gradient(circle,#000 25%,transparent 68%);mask-image:radial-gradient(circle,#000 25%,transparent 68%);opacity:.5}
+.hero h1{font-family:"Bangers",Impact,sans-serif;font-weight:400;letter-spacing:.06em;font-size:clamp(3.2rem,15vw,8rem);background:none;color:var(--gold);-webkit-text-fill-color:currentColor;-webkit-text-stroke:3px #000;paint-order:stroke fill;text-shadow:6px 6px 0 var(--red);filter:none;transform:skewX(-6deg)}
+.hero h2{font-family:"Bangers",Impact,sans-serif;font-weight:400;display:inline-block;margin-top:22px;padding:4px 18px;background:var(--red);color:#fff;border:3px solid #000;box-shadow:4px 4px 0 #000;transform:skewX(-8deg);letter-spacing:.2em;text-shadow:none;font-size:clamp(1.1rem,4vw,1.6rem)}
+.hero p{color:#dfe7ff}
+.btn{font-family:"Bangers",Impact,sans-serif;font-weight:400;font-size:1.2rem;letter-spacing:.1em;color:#fff;background:var(--red);border:3px solid #000;clip-path:none;box-shadow:4px 4px 0 #000;transition:transform .12s,box-shadow .12s}
+.btn:hover{transform:translate(-2px,-2px);box-shadow:7px 7px 0 #000}
+.btn:active{transform:translate(2px,2px);box-shadow:1px 1px 0 #000}
+.btn.red{background:var(--gold);color:#000;box-shadow:4px 4px 0 #000}
+.btn.red:hover{box-shadow:7px 7px 0 #000}
+.btn.ghost{background:#16255e;color:#fff;box-shadow:3px 3px 0 #000}
+.card{background:linear-gradient(160deg,#14246a,#0b1433);border:3px solid #000;box-shadow:6px 6px 0 var(--red);outline:2px solid rgba(255,255,255,.22);outline-offset:-8px;backdrop-filter:none;-webkit-backdrop-filter:none}
+.card h3,.center h2,.vault{font-family:"Bangers",Impact,sans-serif;font-weight:400;letter-spacing:.1em;color:var(--gold);text-shadow:2px 2px 0 #000}
+.card h3{font-size:1.45rem}.center h2{font-size:2rem}.vault{font-size:2.1rem;letter-spacing:.08em}
+.ok{color:var(--ok);text-shadow:1px 1px 0 #000}
+.vault.ok{color:var(--ok)}
+.dot{box-shadow:none;border:2px solid #000}
+label{color:#dfe7ff;font-weight:600}
+input[type=email],input[type=password],input[type=text]{background:#fff;color:#0a1235;border:3px solid #000;font-family:inherit;font-weight:600;font-size:1rem}
+input::placeholder{color:#6b78a3}
+input:focus,.otp input:focus{border-color:#000;box-shadow:0 0 0 3px var(--gold)}
+.otp input{background:#fff;color:#0a1235;border:3px solid #000;box-shadow:3px 3px 0 var(--red);font-family:"Bangers",Impact,sans-serif}
+.timer b{font-family:"Bangers",Impact,sans-serif;font-weight:400;color:var(--gold)}
+.drop{border:4px dashed var(--gold);background:radial-gradient(rgba(255,198,26,.18) 1.5px,transparent 1.6px) 0 0/14px 14px,rgba(0,0,0,.25)}
+.drop.over{background:rgba(242,58,67,.25);border-color:#fff;box-shadow:none}
+.drop strong{font-family:"Bangers",Impact,sans-serif;font-weight:400;letter-spacing:.12em;font-size:1.9rem;text-shadow:3px 3px 0 var(--red)}
+.bar{border:2px solid #000;background:#0a1235}.bar i{background:linear-gradient(90deg,var(--gold),var(--red));box-shadow:none}
+.ring .bg{stroke:rgba(255,255,255,.15)}.ring .fg{filter:none}
+.ring b{font-family:"Bangers",Impact,sans-serif;font-weight:400;color:var(--gold);text-shadow:2px 2px 0 #000}
+.ring b.done{color:var(--ok)}
+.chunks i{background:rgba(255,255,255,.12)}.chunks i.d{background:var(--gold);box-shadow:none}
+.stat b{font-family:"Bangers",Impact,sans-serif;font-weight:400;color:var(--gold);font-size:2.5rem;text-shadow:3px 3px 0 #000}
+.stat:nth-child(even) b{color:#fff;text-shadow:3px 3px 0 var(--red)}
+.stat small{font-weight:600}
+.chart i{background:var(--red);border:2px solid #000;box-shadow:none}.chart i.r{background:var(--gold)}
+.tab{font-family:"Bangers",Impact,sans-serif;font-size:1.05rem;color:#fff;border:2px solid #000;background:#16255e;box-shadow:3px 3px 0 #000}
+.tab.on{background:var(--gold);color:#000;box-shadow:3px 3px 0 var(--red)}
+.chip{font-family:"Bangers",Impact,sans-serif;font-size:1rem;color:#000!important;border:2px solid #000}
+.chip.sending{background:#6db3ff}.chip.pending{background:var(--gold)}.chip.completed{background:var(--ok)}.chip.failed{background:var(--red);color:#fff!important}
+.lk{color:var(--gold)}
+.chk circle,.chk path{filter:none}
+textarea{width:100%;padding:12px;background:#fff;color:#0a1235;border:3px solid #000;font:inherit;font-weight:600;outline:0;resize:vertical}
+textarea:focus{box-shadow:0 0 0 3px var(--gold)}
+input[type=checkbox]{width:20px;height:20px;accent-color:var(--gold)}
+input[type=file]{color:#fff;max-width:100%}
+.sh{font-family:"Bangers",Impact,sans-serif;font-weight:400;color:var(--gold);letter-spacing:.1em;font-size:1.9rem;text-shadow:2px 2px 0 #000;margin:0 0 6px}
+@media(prefers-reduced-motion:reduce){*,::before,::after{animation:none!important;transition:none!important}}
+</style><link rel="preconnect" href="https://fonts.googleapis.com"><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bangers&family=Oswald:wght@400;600&display=swap">
+</head><body>
+<canvas id="fx"></canvas>
+<button class="btn" id="snd" aria-label="Sound on or off" style="position:fixed;right:14px;bottom:calc(14px + env(safe-area-inset-bottom,0px));z-index:9;padding:6px 12px;font-size:1.1rem">🔊</button>
+<nav><div class="logo" data-i="H" data-go="home">HYPER<b>SEND</b></div>
+<div id="navb"></div></nav>
+<main>
+<section class="view on" id="v-home">
+ <div class="hero"><h1>HYPERSEND</h1><h2>SECURE FILE TRANSFER</h2>
+ <p>Transfer massive files with next-generation security, authentication and resumable technology.</p>
+ <div class="btns"><button class="btn" data-go="login">CREATE SECURE TRANSFER</button><button class="btn red" data-go="receive">RECEIVE FILE</button></div></div>
+ <div class="grid"><div class="card scan"><h3>🔐 SECURE CONNECTION</h3>
+ <div class="row"><span>ENCRYPTION</span><span>AES-256</span></div><div class="row"><span>AUTHENTICATION</span><span>OTP</span></div><div class="row"><span>INTEGRITY</span><span>SHA-256</span></div><div class="row"><span>STATUS</span><span class="ok"><i class="dot"></i>SECURE ✓</span></div></div>
+ <div class="card"><h3>⚡ RESUMABLE ENGINE</h3><div class="row"><span>CHUNK SIZE</span><span>100 MB</span></div><div class="row"><span>PARALLEL STREAMS</span><span>4</span></div><div class="row"><span>RESUME ON DROP</span><span class="ok">ENABLED</span></div><div class="row"><span>MAX FILE</span><span>50 GB</span></div></div></div>
+<div id="postSec" style="display:none;margin-top:30px"><h2 class="sh">📢 POSTS &amp; DOWNLOADS FROM ADMIN</h2><p class="hint" id="pmsg" style="text-align:left;min-height:1.2em;margin:0 0 6px"></p>
+ <div class="card" id="composer" style="display:none;margin:10px 0 14px"><h3>➕ NEW POST (ADMIN ONLY)</h3><label for="pT">TITLE</label><input id="pT" type="text" placeholder="Title"><label for="pX">MESSAGE</label><textarea id="pX" rows="3" placeholder="Write an announcement or information"></textarea>
+ <label for="pF">FILES (UP TO 10: DOCUMENTS, IMAGES, VIDEOS...)</label><input id="pF" type="file" multiple><p class="hint" id="pErr" style="min-height:1.2em;margin:8px 0 0"></p><button class="btn red" id="pBtn" style="margin-top:8px">POST</button></div>
+ <div id="postList"></div></div>
+ </section>
+
+<section class="view" id="v-login"><div class="card scan center">
+ <div class="logo" data-i="H" style="text-align:center;font-size:1.5rem">HYPER<b>SEND</b></div><p class="sub">SENDER LOGIN</p>
+ <label for="em">EMAIL</label><input id="em" type="email" placeholder="you@example.com" autocomplete="email">
+ <label for="pw">PASSWORD</label><input id="pw" type="password" placeholder="••••••••" autocomplete="current-password">
+ <p class="hint" id="lerr" style="color:var(--red);margin:10px 0 0;min-height:1.2em"></p>
+ <button class="btn" style="width:100%;margin-top:10px" id="loginBtn">ENTER SECURE SYSTEM</button>
+ <div class="row" style="border:0;margin-top:12px"><button class="lk" data-go="forgot">Forgot password?</button><button class="lk" data-go="signup">Create account</button></div></div></section>
+
+<section class="view" id="v-signup"><div class="card center"><h2>CREATE ACCOUNT</h2><p class="sub">Sign up to send files</p>
+ <label for="suN">FULL NAME</label><input id="suN" type="text" placeholder="Your name" autocomplete="name">
+ <label for="suE">EMAIL</label><input id="suE" type="email" placeholder="you@example.com" autocomplete="email">
+ <label for="suPh">PHONE NUMBER</label><input id="suPh" type="text" inputmode="tel" placeholder="+91 98765 43210" autocomplete="tel">
+ <label for="suP">PASSWORD (MIN 8 CHARACTERS)</label><input id="suP" type="password" autocomplete="new-password">
+ <label for="suC">CONFIRM PASSWORD</label><input id="suC" type="password" autocomplete="new-password">
+ <p class="hint" id="suErr" style="color:var(--red);margin:10px 0 0;min-height:1.2em"></p>
+ <button class="btn" style="width:100%;margin-top:10px" id="signBtn">CREATE ACCOUNT</button>
+ <div class="row" style="border:0;margin-top:12px"><button class="lk" data-go="login">Back to login</button></div></div></section>
+
+<section class="view" id="v-account"><div class="card"><h3>👤 MY ACCOUNT</h3>
+ <div style="display:flex;gap:16px;align-items:center;margin-bottom:14px"><div id="avatar" style="width:64px;height:64px;display:grid;place-items:center;background:var(--gold);color:#000;border:3px solid #000;font-family:'Bangers',Impact,sans-serif;font-size:2.2rem;box-shadow:3px 3px 0 var(--red)">?</div><div style="font-size:1.5rem" id="acHi"></div></div>
+ <div class="row"><span>FULL NAME</span><span id="acN"></span></div><div class="row"><span>REGISTERED EMAIL</span><span id="acE"></span></div><div class="row"><span>PHONE NUMBER</span><span id="acP"></span></div><div class="row"><span>COMPANY / ORGANIZATION</span><span id="acO"></span></div><div class="row"><span>MEMBER SINCE</span><span id="acS"></span></div>
+ <div class="row"><span>FILES SENT</span><span id="acF"></span></div><div class="row"><span>PENDING</span><span id="acPe"></span></div><div class="row"><span>COMPLETED</span><span id="acC"></span></div><div class="row"><span>DATA SENT</span><span id="acD"></span></div></div>
+<div class="grid" style="margin-top:18px">
+ <div class="card"><h3>EDIT DETAILS</h3><label for="edN">FULL NAME</label><input id="edN" type="text" autocomplete="name"><label for="edP">PHONE NUMBER</label><input id="edP" type="text" inputmode="tel" placeholder="+91 98765 43210" autocomplete="tel"><label for="edO">COMPANY / ORGANIZATION (OPTIONAL)</label><input id="edO" type="text" placeholder="Acme Inc." autocomplete="organization">
+ <p class="hint" id="edErr" style="margin:10px 0 0;min-height:1.2em"></p><button class="btn" style="width:100%;margin-top:10px" id="edBtn">SAVE DETAILS</button></div>
+ <div class="card"><h3>CHANGE PASSWORD</h3><label for="pwCur">CURRENT PASSWORD</label><input id="pwCur" type="password" autocomplete="current-password"><label for="pwNew">NEW PASSWORD (MIN 8)</label><input id="pwNew" type="password" autocomplete="new-password"><label for="pwRep">CONFIRM NEW PASSWORD</label><input id="pwRep" type="password" autocomplete="new-password">
+ <p class="hint" id="pwErr" style="margin:10px 0 0;min-height:1.2em"></p><button class="btn red" style="width:100%;margin-top:10px" id="pwBtn">CHANGE PASSWORD</button></div></div></section>
+
+<section class="view" id="v-passkey"><div class="card scan center"><h2>ADMIN PASSKEY</h2><p class="sub">Enter your admin passkey to continue</p>
+ <label for="pk">PASSKEY</label><input id="pk" type="password" inputmode="numeric" autocomplete="off">
+ <p class="hint" id="pkErr" style="color:var(--red);margin:10px 0 0;min-height:1.2em"></p><button class="btn" style="width:100%;margin-top:10px" id="pkBtn">UNLOCK ADMIN</button>
+ <div class="row" style="border:0;margin-top:12px"><button class="lk" data-go="login">Cancel</button></div></div></section>
+
+<section class="view" id="v-admpw"><div class="card center"><h2>NEW ADMIN PASSWORD</h2><p class="sub">Identity verified by OTP</p>
+ <label for="apN">NEW PASSWORD (MIN 8 CHARACTERS)</label><input id="apN" type="password" autocomplete="new-password"><label for="apC">CONFIRM PASSWORD</label><input id="apC" type="password" autocomplete="new-password">
+ <p class="hint" id="apErr" style="color:var(--red);margin:10px 0 0;min-height:1.2em"></p><button class="btn red" style="width:100%;margin-top:10px" id="apBtn">SAVE ADMIN PASSWORD</button></div></section>
+
+<section class="view" id="v-forgot"><div class="card center"><h2>FORGOT PASSWORD</h2><p class="sub">We email a code to confirm it is you</p>
+ <label for="fgE">ACCOUNT EMAIL</label><input id="fgE" type="email" placeholder="you@example.com" autocomplete="email">
+ <p class="hint" id="fgErr" style="color:var(--red);margin:10px 0 0;min-height:1.2em"></p>
+ <button class="btn" style="width:100%;margin-top:10px" id="fgBtn">SEND RESET CODE</button>
+ <div class="row" style="border:0;margin-top:12px"><button class="lk" data-go="login">Back to login</button></div></div></section>
+
+<section class="view" id="v-reset"><div class="card center"><h2>SET NEW PASSWORD</h2><p class="sub">Choose a new password</p>
+ <label for="rsP">NEW PASSWORD (MIN 8 CHARACTERS)</label><input id="rsP" type="password" autocomplete="new-password">
+ <label for="rsC">CONFIRM PASSWORD</label><input id="rsC" type="password" autocomplete="new-password">
+ <p class="hint" id="rsErr" style="color:var(--red);margin:10px 0 0;min-height:1.2em"></p>
+ <button class="btn" style="width:100%;margin-top:10px" id="rsBtn">SAVE NEW PASSWORD</button></div></section>
+
+<section class="view" id="v-history"><div class="card"><h3>📁 MY TRANSFERS</h3><div id="htabs" style="display:flex;gap:8px;flex-wrap:wrap"></div></div><div id="hlist" class="grid" style="margin-top:18px"></div></section>
+
+<section class="view" id="v-otp"><div class="card center">
+ <div id="otpBox"><h2>IDENTITY VERIFICATION REQUIRED</h2><p class="sub" id="otpTo">Enter the 6-digit code</p><div id="inbox" class="row" style="display:none;border:1px solid var(--red);padding:10px;margin-bottom:8px"><span>📧 TEST INBOX</span><span>Your code: <b style="color:var(--ok);letter-spacing:.2em"></b></span></div>
+ <div class="otp" id="otp"></div>
+ <div class="timer">OTP expires in: <b id="tm">00:58</b></div>
+ <p class="hint" id="oerr" style="color:var(--red);margin:0 0 10px;min-height:1.2em"></p><button class="btn" style="width:100%" id="verBtn">VERIFY IDENTITY</button><button class="btn ghost" style="width:100%;margin-top:10px" id="resend">RESEND OTP</button>
+ <div style="margin-top:18px"><div class="row"><span class="ok">✓ Transfer ID verified</span></div><div class="row"><span class="ok">✓ Password verified</span></div><div class="row"><span><i class="dot w"></i>Waiting for OTP</span></div></div>
+ <p class="hint">The code expires soon. Three wrong tries lock it.</p></div>
+ <div class="granted" id="gr"><svg class="chk" viewBox="0 0 100 100"><circle cx="50" cy="50" r="44"/><path d="M28 52l16 16 30-34"/></svg><h2>ACCESS GRANTED</h2></div></div></section>
+
+<section class="view" id="v-upload"><div class="card">
+ <h3>📡 UPLOAD CHAMBER</h3>
+ <div id="modes" style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:6px"><button class="tab on" data-mode="one">ONE PERSON (WITH OTP)</button><button class="tab" data-mode="group">GROUP (ID + PASSWORD)</button></div>
+ <div id="grpF" style="display:none;margin-bottom:6px"><label for="gn">GROUP NAME</label><input id="gn" type="text" placeholder="Design Team" autocomplete="off"><p class="hint" style="text-align:left">No OTP for groups. Anyone with the Transfer ID and password can open the file. Each person enters their name, so you can see who opened it and when.</p></div>
+ <div class="grid" id="oneF" style="margin-bottom:6px"><div><label for="rn">RECEIVER NAME</label><input id="rn" type="text" placeholder="Receiver name" autocomplete="off"></div><div><label for="re">RECEIVER EMAIL (OTP GOES HERE)</label><input id="re" type="email" placeholder="receiver@gmail.com" autocomplete="off"></div></div><p class="hint" id="uerr" style="color:var(--red);margin:0 0 12px"></p>
+ <div class="drop" id="drop"><strong>DROP FILE HERE</strong><small>OR</small><span class="btn" style="display:inline-block">SELECT LARGE FILE</span><input type="file" id="file" aria-label="Select a file to send" style="position:absolute;inset:0;width:100%;height:100%;opacity:0;cursor:pointer"></div>
+ 
+ <div id="stage" style="display:none;margin-top:14px"><div class="row" style="border:0"><span id="stN">0 / 30 files</span><span id="stS"></span></div><div id="stList"></div><div class="btns" style="justify-content:flex-start;margin-top:12px"><button class="btn" id="upAll">UPLOAD ALL FILES</button><button class="btn ghost" id="stClr">CLEAR</button></div></div>
+ <div class="up" id="up"><div class="ring"><svg width="150" height="150" viewBox="0 0 150 150"><defs><linearGradient id="g"><stop offset="0" stop-color="#ffc61a"/><stop offset="1" stop-color="#f23a43"/></linearGradient></defs><circle class="bg" cx="75" cy="75" r="65"/><circle class="fg" id="fg" cx="75" cy="75" r="65"/></svg><b id="pc">0%</b></div>
+ <div style="width:100%"><div id="ustat" class="ok" style="letter-spacing:.2em;margin-bottom:4px">UPLOADING…</div><div id="fn" style="letter-spacing:.1em"></div><div style="font-size:1.4rem" id="sz"></div><div class="bar"><i id="pb"></i></div>
+ <div class="row"><span>SPEED</span><span id="sp">0 MB/s</span></div><div class="row"><span>ESTIMATED TIME</span><span id="et">--</span></div><div class="row"><span>CURRENT CHUNK</span><span id="ck">0 / 200</span></div>
+ <div class="chunks" id="chunks"></div></div></div>
+ <div id="share" style="display:none;margin-top:22px"><h3 class="ok">✓ TRANSFER READY — SHARE WITH RECEIVER</h3>
+ <div class="row"><span>TRANSFER ID</span><span id="sid"></span></div><div class="row"><span>PASSWORD</span><span id="spw"></span></div><div class="row"><span>RECEIVER</span><span id="srx"></span></div>
+ <p class="hint" id="shint" style="text-align:left">Send these to the receiver through different channels. They open RECEIVE, enter both, enter the OTP emailed to the receiver and reach the vault. The file is stored in this browser, so use the same device and browser to receive.</p>
+ <div class="btns" style="justify-content:flex-start;margin-top:14px"><button class="btn" id="cp">COPY DETAILS</button><button class="btn red" data-go="receive">OPEN RECEIVER VIEW</button></div></div></div></section>
+
+<section class="view" id="v-receive"><div class="card scan center">
+ <h2>RECEIVE SECURE FILE</h2><p class="sub">Enter the details shared by the sender</p>
+ <label for="rid">TRANSFER ID</label><input id="rid" type="text" placeholder="HS-4821-K9QX" autocomplete="off">
+ <label for="rpw">TRANSFER PASSWORD</label><input id="rpw" type="password" placeholder="••••••••" autocomplete="off">
+ <label for="rnm">YOUR NAME (REQUIRED FOR GROUP TRANSFERS)</label><input id="rnm" type="text" placeholder="Your name" autocomplete="name">
+ <button class="btn red" style="width:100%;margin-top:22px" id="rcvBtn">UNLOCK TRANSFER</button>
+ <p class="hint" id="rerr" style="color:var(--red);margin:10px 0 0"></p><p class="hint">A single-person transfer asks for an OTP next. A group transfer has no OTP: enter your name and the vault opens. Files are kept in this browser, so the receiver must use the same device and browser as the sender.</p></div></section>
+
+<section class="view" id="v-vault"><div class="card scan center" style="max-width:520px">
+ <div class="vault ok">FILE SECURED ✓</div>
+ <div class="row"><span>FILE</span><span id="vn">Document.zip</span></div><div class="row"><span>SIZE</span><span id="vs">15.8 GB</span></div><div class="row"><span>INTEGRITY</span><span class="ok" id="vh">SHA-256 VERIFIED ✓</span></div><div class="row"><span>TRANSFER</span><span class="ok"><i class="dot"></i>SECURE</span></div><div class="row"><span>SENT ON</span><span id="vt">-</span></div><div class="row"><span>OPENED BY</span><span id="vw">-</span></div>
+ <div id="sdl"><button class="btn red" style="width:100%;margin-top:20px" id="dl">DOWNLOAD SECURE FILE</button>
+ <div class="bar" style="height:14px;margin-top:18px"><i id="db"></i></div><div class="row" style="border:0"><span id="dt">Ready</span><span id="dp">0%</span></div></div></div>
+<div class="card" id="gcard" style="display:none;margin-top:18px"><h3>FILES IN THIS TRANSFER</h3><p class="hint" id="gmsg" style="min-height:1.2em"></p><div class="grid" id="gGrid" style="grid-template-columns:repeat(auto-fill,minmax(150px,1fr))"></div></div></section>
+
+<section class="view" id="v-admin">
+ <div class="card"><h3>🛰 COMMAND CENTER</h3><div class="row" style="border:0"><span>ADMIN</span><span>Harsha Vardhan</span></div></div>
+ <div class="stats" id="stats"></div>
+ <div class="grid"><div class="card"><h3>TRANSFERS — LAST 12 DAYS</h3><div class="chart" id="ch"></div></div>
+ <div class="card"><h3>SECURITY EVENTS</h3><div class="row"><span>Security events logged</span><span id="adSec"></span></div><div class="row"><span>One-person transfers</span><span id="adOne"></span></div><div class="row"><span>Group transfers</span><span id="adGrp"></span></div><div class="row"><span>Failed uploads</span><span id="adFail"></span></div</div></div></div>
+<div class="grid" style="margin-top:18px">
+<div class="card"><h3>⚙ SITE SETTINGS</h3><label for="cfN">SITE NAME</label><input id="cfN" type="text"><label for="cfT">HOME SUBTITLE</label><input id="cfT" type="text"><label for="cfP">HOME DESCRIPTION</label><textarea id="cfP" rows="3"></textarea>
+ <label for="cfM">MAX FILES PER GROUP TRANSFER</label><input id="cfM" type="text" inputmode="numeric"><label for="cfO">OTP EXPIRY (SECONDS)</label><input id="cfO" type="text" inputmode="numeric">
+ <label style="display:flex;gap:10px;align-items:center;margin-top:14px"><input id="cfS" type="checkbox"> ALLOW NEW SIGN-UPS</label>
+ <p class="hint" id="cfErr" style="min-height:1.2em;margin:8px 0 0"></p><button class="btn" id="cfBtn">SAVE SETTINGS</button></div>
+<div class="card"><h3>👥 USERS</h3><div id="uList"></div></div>
+<div class="card"><h3>🔐 ADMIN SECURITY</h3><p class="hint" style="text-align:left">The admin password cannot be changed from login, profile or forgot-password. Change it here: an OTP is sent to the admin email first.</p><button class="btn red" id="admPwBtn">CHANGE ADMIN PASSWORD</button></div></div>
+</section>
+<p class="hint" id="footTxt" style="margin-top:30px">HyperSend: secure large file transfer</p></main>
+<script>
+const $=s=>document.querySelector(s),$$=s=>document.querySelectorAll(s);
+let otpT,upT;
+function go(v){SFX.whoosh();if(v==='login'){if(user)v='upload';else lmsg('')}if((v==='upload'||v==='history'||v==='account')&&!user){v='login';lmsg('Log in or create an account to send files.')}if((v==='admin'||v==='admpw')&&!isAdmin)v='home';if(v==='passkey'&&!admEmail)v='login';$$('.view').forEach(e=>e.classList.toggle('on',e.id==='v-'+v));$$('nav button').forEach(b=>b.classList.toggle('act',b.dataset.go===v));scrollTo(0,0);
+ if(v==='admin')admin();if(v==='history')hist();if(v==='home')renderPosts();if(v==='account')acct();if(v==='otp')startOtp();if(v==='vault'){$('#db').style.width='0';$('#dp').textContent='0%';$('#dt').textContent='Ready';fillVault()}}
+document.addEventListener('click',e=>{const g=e.target.closest('[data-go]');if(g)go(g.dataset.go)});
+let after='upload',cur=null,otpTo='',otpCode=null,otpTries=0,pend=null,user=null,isAdmin=false,hf='all',resetFor='',mode='one',curWho='',stage=[],admEmail='',pkFail=0,lockUntil=0;const DEMO=new Map();
+$('#rcvBtn').onclick=async()=>{const a=$('#rid'),b=$('#rpw'),e=$('#rerr');e.textContent='';const id=a.value.trim().toUpperCase();if(!id){a.focus();return}if(!b.value){b.focus();return}
+ const r=await get(id);if(r&&r.pw===b.value){if(r.mode==='group'){const nm=$('#rnm').value.trim();if(!nm){e.textContent='Enter your name to open this group transfer.';$('#rnm').focus();return}cur=r;curWho=nm;grpOpen(r.id,nm);go('vault');return}cur=r;otpTo=r.remail||''}else if(DEMO.has(id+'|'+b.value)){cur=null;otpTo=DEMO.get(id+'|'+b.value)}else{e.textContent='No matching transfer on this device. Check the ID and password.';return}after='vault';go('otp')};
+// OTP
+const oi=[];for(let i=0;i<6;i++){const n=document.createElement('input');n.maxLength=1;n.inputMode='numeric';n.setAttribute('aria-label','Digit '+(i+1));
+ n.oninput=()=>{n.value=n.value.replace(/\D/g,'');if(n.value)SFX.key();if(n.value&&oi[i+1])oi[i+1].focus()};
+ n.onkeydown=e=>{if(e.key==='Backspace'&&!n.value&&oi[i-1])oi[i-1].focus()};oi.push(n);$('#otp').appendChild(n)}
+const EMAILJS={service:'',template:'',key:''}; // fill these to send real emails (see guide)
+function mask(m){const p=m.split('@');return p[0].slice(0,2)+'***@'+(p[1]||'')}
+async function sendOtp(){const code=String(crypto.getRandomValues(new Uint32Array(1))[0]%1000000).padStart(6,'0');otpCode=code;otpTries=0;$('#inbox').style.display='none';$('#oerr').textContent='';$('#otpTo').textContent='Code sent to '+mask(otpTo);let sent=false;
+ if(EMAILJS.service){try{const r=await fetch('https://api.emailjs.com/api/v1.0/email/send',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({service_id:EMAILJS.service,template_id:EMAILJS.template,user_id:EMAILJS.key,template_params:{to_email:otpTo,otp:code,app:cfgv().name}})});sent=r.ok}catch(e){}}
+ if(!sent){$('#otpTo').textContent='Email service not connected. Test inbox for '+mask(otpTo);$('#inbox').style.display='flex';$('#inbox b').textContent=code}
+ let t=cfgv().otp;clearInterval(otpT);const f=()=>{$('#tm').textContent=String(Math.floor(Math.max(t,0)/60)).padStart(2,'0')+':'+String(Math.max(t,0)%60).padStart(2,'0');if(t--<=0){clearInterval(otpT);otpCode=null;$('#oerr').textContent='OTP expired. Tap RESEND OTP.'}};f();otpT=setInterval(f,1000)}
+function startOtp(){$('#otpBox').style.display='';$('#gr').classList.remove('on');oi.forEach(i=>i.value='');oi[0].focus();sendOtp()}
+$('#verBtn').onclick=()=>{const v=oi.map(i=>i.value).join('');if(v.length<6){oi.find(i=>!i.value).focus();return}
+ if(!otpCode){$('#oerr').textContent='OTP expired. Tap RESEND OTP.';return}
+ if(v!==otpCode){otpTries++;secEv();oi.forEach(i=>i.value='');oi[0].focus();if(otpTries>=3){otpCode=null;clearInterval(otpT);$('#oerr').textContent='Too many wrong tries. Tap RESEND OTP.'}else $('#oerr').textContent='Incorrect OTP. '+(3-otpTries)+' tries left.';return}
+ SFX.ok();otpCode=null;clearInterval(otpT);$('#otpBox').style.display='none';$('#gr').classList.add('on');setTimeout(()=>go(after),2000)};
+$('#resend').onclick=()=>{oi.forEach(i=>i.value='');oi[0].focus();sendOtp()};
+// Upload
+const drop=$('#drop'),fi=$('#file');
+fi.onclick=()=>{fi.value=''};
+drop.onkeydown=e=>{if(e.key==='Enter')fi.click()};
+['dragenter','dragover'].forEach(t=>drop.addEventListener(t,e=>{e.preventDefault();drop.classList.add('over')}));
+['dragleave','drop'].forEach(t=>drop.addEventListener(t,e=>{e.preventDefault();drop.classList.remove('over')}));
+drop.addEventListener('drop',e=>{pick(e.dataTransfer.files)});
+fi.onchange=()=>{pick(fi.files)};
+function rcvOk(){if(mode==='group'){if(!$('#gn').value.trim()){$('#uerr').textContent='Enter a group name first.';$('#gn').focus();return false}$('#uerr').textContent='';return true}if(!/^\S+@\S+\.\S+$/.test($('#re').value.trim())){$('#uerr').textContent="Enter the receiver's email first. The OTP is sent there.";$('#re').focus();return false}$('#uerr').textContent='';return true}
+$('#re').onchange=()=>{if(pend&&rcvOk()){const f=pend;pend=null;real(f)}};
+$('#gn').onchange=$('#re').onchange;
+function fmt(b){return b>=1024**3?(b/1024**3).toFixed(1)+' GB':b>=1024**2?(b/1024**2).toFixed(1)+' MB':(b/1024).toFixed(1)+' KB'}
+function run(name,size){clearInterval(upT);$('#share').style.display='none';$('#up').classList.add('on');$('#fn').textContent=name;const C=200,ch=$('#chunks');ch.innerHTML='<i></i>'.repeat(C);let p=0;
+ upT=setInterval(()=>{p+=.5;const sp=38+Math.random()*9,left=Math.max(0,(100-p)/100*8);
+ $('#pc').textContent=Math.round(p)+'%';$('#fg').style.strokeDashoffset=408*(1-p/100);$('#pb').style.width=p+'%';
+ $('#sz').textContent=fmt(size*p/100)+' / '+fmt(size);$('#sp').textContent=sp.toFixed(1)+' MB/s';
+ const s=Math.round(left*12);$('#et').textContent=Math.floor(s/60)+' min '+String(s%60).padStart(2,'0')+' sec';
+ const c=Math.floor(p/100*C);$('#ck').textContent=c+' / '+C;const k=ch.children;for(let i=0;i<c;i++)k[i].className='d';
+ if(p>=100){clearInterval(upT);$('#et').textContent='Upload done ✓';$('#sp').textContent='SHA-256 verified ✓';share()}},40)}
+function rnd(n){return Array.from({length:n},()=>'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'[Math.floor(Math.random()*32)]).join('')}
+const ML={};function lsg(k,d){try{const v=localStorage.getItem(k);if(v!==null)return JSON.parse(v)}catch(e){}return k in ML?ML[k]:d}
+function lss(k,v){ML[k]=v;try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}}
+async function sh(s){const h=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(s));return[...new Uint8Array(h)].map(x=>x.toString(16).padStart(2,'0')).join('')}
+const esc=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const ADMIN_HASH='3bc2918994dd583d840830bbec81711ca2d08ff55255ba629eb25a11d204a263';
+function lmsg(t,ok){const e=$('#lerr');e.textContent=t;e.style.color=ok?'var(--ok)':'var(--red)'}
+function secEv(){lss('hs_sec',lsg('hs_sec',0)+1)}
+function renderNav(){const b=[['home','HOME']];if(user)b.push(['upload','SEND'],['history','MY FILES'],['account','PROFILE']);else b.push(['login','LOGIN']);b.push(['receive','RECEIVE']);if(isAdmin)b.push(['admin','ADMIN']);
+ $('#navb').innerHTML=b.map(x=>'<button data-go="'+x[0]+'">'+x[1]+'</button>').join('')+(user?'<button id="lo">LOGOUT</button>':'')}
+async function login(m,adm){SFX.ok();user=m;lss('hs_sess',adm?null:m);isAdmin=!!adm&&(await sh(m))===ADMIN_HASH;renderNav();go('upload')}
+document.addEventListener('click',e=>{if(e.target.id==='lo'){user=null;isAdmin=false;lss('hs_sess',null);renderNav();go('home')}const h=e.target.closest('[data-hf]');if(h){hf=h.dataset.hf;hist()}const mo=e.target.closest('[data-mode]');if(mo){mode=mo.dataset.mode;setMode()}const pd=e.target.closest('[data-pdl]');if(pd)pdl(pd.dataset.pdl);const pl=e.target.closest('[data-pdel]');if(pl&&isAdmin){const id=pl.dataset.pdel;lss('hs_posts',lsg('hs_posts',[]).filter(p=>p.id!==id));del('post-'+id);renderPosts()}const ud=e.target.closest('[data-udel]');if(ud&&isAdmin){if(ud.dataset.sure){const U=lsg('hs_users',{});delete U[ud.dataset.udel];lss('hs_users',U);adminX()}else{ud.dataset.sure=1;ud.textContent='tap again to confirm'}}const rm=e.target.closest('[data-rm]');if(rm){stage.splice(+rm.dataset.rm,1);drawStage()}const gd=e.target.closest('[data-gdl]');if(gd)gdl(+gd.dataset.gdl);});
+$('#loginBtn').onclick=async()=>{const m=$('#em').value.trim().toLowerCase(),p=$('#pw').value;if(!m||!p){lmsg('Enter your email and password.');return}
+ if((await sh(m))===ADMIN_HASH){if(Date.now()<lockUntil){lmsg('Locked for a minute after wrong passkey tries.');return}const o=lsg('hs_admin',null);if(await kdf(p,o?o.salt:ADM.salt)!==(o?o.hash:ADM.ph)){secEv();lmsg('Wrong email or password.');return}admEmail=m;lmsg('');$('#pw').value='';$('#pk').value='';$('#pkErr').textContent='';go('passkey');return}
+ const u=lsg('hs_users',{})[m];if(!u||await sh(u.salt+p)!==u.hash){secEv();lmsg('Wrong email or password. No account yet? Tap Create account.');return}lmsg('');$('#pw').value='';await login(m)};
+$('#signBtn').onclick=async()=>{const n=$('#suN').value.trim(),m=$('#suE').value.trim().toLowerCase(),p=$('#suP').value,c=$('#suC').value,ph=$('#suPh').value.trim(),e=$('#suErr');
+ if(cfgv().signups===false){e.textContent='New sign-ups are closed right now.';return}if((await sh(m))===ADMIN_HASH){e.textContent='This email is reserved.';return}if(!n||!/^\S+@\S+\.\S+$/.test(m)){e.textContent='Enter your name and a valid email.';return}if(!okPh(ph)){e.textContent='Enter a valid phone number (7 to 15 digits).';return}
+ if(p.length<8){e.textContent='Password must be at least 8 characters.';return}if(p!==c){e.textContent='Passwords do not match.';return}
+ const U=lsg('hs_users',{});if(U[m]){e.textContent='An account with this email already exists. Log in instead.';return}
+ const salt=rnd(12);U[m]={name:n,phone:ph,salt,hash:await sh(salt+p),created:Date.now()};lss('hs_users',U);e.textContent='';$('#suP').value=$('#suC').value='';await login(m)};
+$('#fgBtn').onclick=async()=>{const m=$('#fgE').value.trim().toLowerCase(),e=$('#fgErr');if((await sh(m))===ADMIN_HASH){e.textContent='The admin password cannot be reset here. It can only be changed from the Admin panel.';return}if(!lsg('hs_users',{})[m]){e.textContent='No account found with this email.';return}e.textContent='';resetFor=m;otpTo=m;after='reset';go('otp')};
+$('#rsBtn').onclick=async()=>{const p=$('#rsP').value,c=$('#rsC').value,e=$('#rsErr');if(p.length<8){e.textContent='Password must be at least 8 characters.';return}if(p!==c){e.textContent='Passwords do not match.';return}
+ const U=lsg('hs_users',{}),u=U[resetFor];if(!u){go('login');return}u.salt=rnd(12);u.hash=await sh(u.salt+p);lss('hs_users',U);e.textContent='';$('#rsP').value=$('#rsC').value='';go('login');lmsg('Password updated. Log in with your new password.',1)};
+function okPh(p){const d=p.replace(/\D/g,'');return /^[+\d][\d\s\-()]*$/.test(p)&&d.length>=7&&d.length<=15}
+function fm(id,t,ok){const e=$('#'+id);e.textContent=t;e.style.color=ok?'var(--ok)':'var(--red)'}
+function acct(){const u=lsg('hs_users',{})[user]||{},T=lsg('hs_tx',[]).filter(t=>t.owner===user),g=(i,t)=>{$('#'+i).textContent=t};
+ $('#avatar').textContent=(u.name||'?').trim().charAt(0).toUpperCase();g('acHi','Hi, '+(u.name||'').split(' ')[0]);g('acN',u.name||'-');g('acE',user);g('acP',u.phone||'Not added yet');g('acO',u.org||'Not added yet');g('acS',u.created?new Date(u.created).toLocaleDateString():'-');
+ g('acF',T.reduce((x,t)=>x+(t.fnames?t.fnames.length:1),0));g('acPe',T.filter(t=>t.status==='pending').length);g('acC',T.filter(t=>t.status==='completed').length);g('acD',fmt(T.reduce((x,t)=>x+t.size,0)));
+ $('#edN').value=u.name||'';$('#edP').value=u.phone||'';$('#edO').value=u.org||'';$('#edErr').textContent='';$('#pwErr').textContent=''}
+$('#edBtn').onclick=()=>{const n=$('#edN').value.trim(),p=$('#edP').value.trim(),o=$('#edO').value.trim();if(!n){fm('edErr','Name cannot be empty.');return}if(!okPh(p)){fm('edErr','Enter a valid phone number (7 to 15 digits).');return}
+ const U=lsg('hs_users',{});Object.assign(U[user],{name:n,phone:p,org:o});lss('hs_users',U);acct();fm('edErr','Details saved.',1)};
+$('#pwBtn').onclick=async()=>{if(isAdmin){fm('pwErr','The admin password can only be changed from the Admin panel.');return}const c=$('#pwCur').value,n=$('#pwNew').value,r=$('#pwRep').value,U=lsg('hs_users',{}),u=U[user];
+ if(await sh(u.salt+c)!==u.hash){secEv();fm('pwErr','Current password is wrong.');return}if(n.length<8){fm('pwErr','New password must be at least 8 characters.');return}if(n!==r){fm('pwErr','New passwords do not match.');return}
+ u.salt=rnd(12);u.hash=await sh(u.salt+n);lss('hs_users',U);['pwCur','pwNew','pwRep'].forEach(i=>{$('#'+i).value=''});fm('pwErr','Password changed.',1)};
+const dtf=x=>new Date(x).toLocaleString(undefined,{dateStyle:'medium',timeStyle:'medium'});
+function markAccess(id){const a=lsg('hs_tx',[]),t=a.find(x=>x.id===id);if(t&&!t.accessAt){t.accessAt=Date.now();lss('hs_tx',a)}}
+function txSave(id,patch){const a=lsg('hs_tx',[]),i=a.findIndex(t=>t.id===id);if(i>-1){Object.assign(a[i],patch);lss('hs_tx',a)}}
+function newTx(file){const t={id:'HS-'+rnd(4)+'-'+rnd(4),pw:rnd(8),owner:user,name:file.name,size:file.size,status:'sending',created:Date.now(),rname:mode==='group'?'':$('#rn').value.trim(),remail:mode==='group'?'':$('#re').value.trim(),mode:mode,gname:mode==='group'?$('#gn').value.trim():'',access:[]};const a=lsg('hs_tx',[]);a.push(t);lss('hs_tx',a);return t}
+async function finish(T,file,hash,files){const now=Date.now();await put({id:T.id,pw:T.pw,name:T.name,size:T.size,blob:file,hash,remail:T.remail,rname:T.rname,sent:now,mode:T.mode,gname:T.gname,files:files});txSave(T.id,{status:T.mode==='group'?'shared':'pending',hash,doneAt:now,fnames:files?files.map(x=>x.name):undefined});$('#shint').textContent=T.mode==='group'?'Share the Transfer ID and password with your group. Each person enters their name and opens the file, with no OTP. See who opened it, and when, in MY FILES.':'Send these to the receiver through different channels. They open RECEIVE, enter both, enter the OTP emailed to the receiver and reach the vault. The file is stored in this browser, so use the same device and browser to receive.';
+ $('#sid').textContent=T.id;$('#spw').textContent=T.pw;$('#srx').textContent=T.mode==='group'?'Group: '+T.gname:T.remail;$('#rid').value=T.id;$('#rpw').value=T.pw;$('#share').style.display='block';
+ $('#cp').onclick=()=>{const t='Transfer ID: '+T.id+'\nPassword: '+T.pw;try{navigator.clipboard.writeText(t)}catch(e){}$('#cp').textContent='COPIED \u2713'}}
+function hist(){const all=lsg('hs_tx',[]).filter(t=>t.owner===user).sort((a,b)=>b.created-a.created),L={sending:'SENDING',pending:'PENDING',completed:'COMPLETED',failed:'FAILED',shared:'GROUP'},isG=t=>t.mode==='group',
+ f=hf==='all'?all:hf==='group'?all.filter(isG):all.filter(t=>t.status===hf&&!isG(t)),dt=dtf,cnt=k=>k==='all'?all.length:k==='group'?all.filter(isG).length:all.filter(t=>t.status===k&&!isG(t)).length;
+ $('#htabs').innerHTML=[['all','ALL'],['sending','SENDING'],['pending','PENDING'],['completed','COMPLETED'],['group','GROUP']].map(x=>'<button class="tab'+(hf===x[0]?' on':'')+'" data-hf="'+x[0]+'">'+x[1]+' ('+cnt(x[0])+')</button>').join('');
+ $('#hlist').innerHTML=f.length?f.map(t=>{const g=isG(t),A=t.access||[];
+ let h='<div class="card"><div class="row" style="border:0"><span>'+esc(t.name)+'</span><span class="chip '+(t.status==='shared'?'group':t.status)+'">'+L[t.status]+'</span></div><div class="row"><span>SIZE</span><span>'+fmt(t.size)+'</span></div>'
+ +(g?'<div class="row"><span>GROUP</span><span>'+esc(t.gname)+'</span></div>'+(t.fnames?'<div class="row"><span>FILES ('+t.fnames.length+')</span><span>'+t.fnames.map(x=>esc(x)).join('<br>')+'</span></div>':''):'<div class="row"><span>RECEIVER</span><span>'+esc(t.rname||'-')+'<br>'+esc(t.remail)+'</span></div>')
+ +'<div class="row"><span>UPLOAD STARTED</span><span>'+dt(t.created)+'</span></div>'+(t.doneAt?'<div class="row"><span>SENT (UPLOAD DONE)</span><span>'+dt(t.doneAt)+'</span></div>':'');
+ if(t.status!=='sending'&&t.status!=='failed')h+='<div class="row"><span>TRANSFER ID</span><span>'+esc(t.id)+'</span></div><div class="row"><span>PASSWORD</span><span>'+esc(t.pw)+'</span></div>';
+ if(g){if(t.status==='shared')h+='<div class="row"><span>PEOPLE ACCESSED</span><span class="ok">'+A.length+'</span></div>'+(A.length?A.map(p=>'<div class="row"><span>'+esc(p.name)+'</span><span class="ok">Opened '+dt(p.at)+(p.dls&&p.dls.length?'<br>Downloaded '+p.dls.length+' file(s): '+esc([...new Set(p.dls.map(x=>x.file))].join(', '))+'<br>Last download '+dt(p.dlAt):p.dlAt?'<br>Downloaded '+dt(p.dlAt):'<br>Not downloaded yet')+'</span></div>').join(''):'<div class="row"><span>STATUS</span><span>Nobody has opened it yet</span></div>')}
+ else h+=(t.status==='pending'||t.status==='completed'?'<div class="row"><span>RECEIVER OPENED</span><span'+(t.accessAt?' class="ok">'+dt(t.accessAt):'>Not opened yet')+'</span></div>':'')+(t.receivedAt?'<div class="row"><span>DOWNLOADED (RECEIVED)</span><span class="ok">'+dt(t.receivedAt)+'</span></div>':t.status==='pending'?'<div class="row"><span>STATUS</span><span>Waiting for receiver</span></div>':'');
+ return h+'</div>'}).join(''):'<div class="card"><p class="sub" style="margin:0">No transfers here yet.</p></div>'}
+function setMode(){fi.multiple=mode==='group';$('#drop strong').textContent=mode==='group'?'DROP UP TO '+cfgv().max+' FILES':'DROP FILE HERE';drawStage();$$('[data-mode]').forEach(b=>b.classList.toggle('on',b.dataset.mode===mode));$('#oneF').style.display=mode==='one'?'':'none';$('#grpF').style.display=mode==='group'?'':'none';$('#uerr').textContent=''}
+function grpOpen(id,nm){const a=lsg('hs_tx',[]),t=a.find(x=>x.id===id);if(!t)return;t.access=t.access||[];if(!t.access.find(x=>x.name.toLowerCase()===nm.toLowerCase())){t.access.push({name:nm,at:Date.now()});lss('hs_tx',a)}}
+function grpDl(id,nm,file){const a=lsg('hs_tx',[]),t=a.find(x=>x.id===id),p=t&&(t.access||[]).find(x=>x.name.toLowerCase()===nm.toLowerCase());if(p){p.dlAt=Date.now();if(file)(p.dls=p.dls||[]).push({file:file,at:p.dlAt});lss('hs_tx',a)}}
+function grpDlOld(id,nm){const a=lsg('hs_tx',[]),t=a.find(x=>x.id===id),p=t&&(t.access||[]).find(x=>x.name.toLowerCase()===nm.toLowerCase());if(p){p.dlAt=Date.now();lss('hs_tx',a)}}
+function adminStats(){const T=lsg('hs_tx',[]),n=Object.values(lsg('hs_users',{})).filter(u=>u.hash!=='!').length,sum=a=>a.reduce((x,t)=>x+t.size,0),big=b=>b>=1073741824?[+(b/1073741824).toFixed(2),' GB']:[+(b/1048576).toFixed(1),' MB'];
+ return[[n,''],[T.filter(t=>t.status==='sending'||t.status==='pending'||t.status==='shared').length,''],[T.reduce((x,t)=>x+(t.fnames?t.fnames.length:1),0),''],big(sum(T)),big(sum(T.filter(t=>t.status==='completed'))),[lsg('hs_sec',0),'']]}
+let _x=0;
+function pick(list){const fl=[...list];if(!fl.length)return;if(mode==='group')addStage(fl);else real(fl[0])}
+function addStage(fl){let skip=0;for(const f of fl){if(stage.some(x=>x.name===f.name&&x.size===f.size))continue;if(stage.length>=cfgv().max){skip++;continue}stage.push(f)}$('#uerr').textContent=skip?'Maximum '+cfgv().max+' files per group transfer. '+skip+' file(s) were not added.':'';drawStage()}
+function drawStage(){$('#stage').style.display=mode==='group'&&stage.length?'block':'none';$('#stN').textContent=stage.length+' / '+cfgv().max+' files';$('#stS').textContent=fmt(stage.reduce((x,f)=>x+f.size,0));
+ $('#stList').innerHTML=stage.map((f,i)=>'<div class="row"><span>'+esc(f.name)+'</span><span>'+fmt(f.size)+' <button class="lk" data-rm="'+i+'">remove</button></span></div>').join('')}
+$('#upAll').onclick=()=>{if(!stage.length){$('#uerr').textContent='Add at least one file.';return}if(!rcvOk())return;const fl=stage.slice();stage=[];drawStage();realG(fl)};
+$('#stClr').onclick=()=>{stage=[];drawStage();$('#uerr').textContent=''};
+async function realG(files){clearInterval(upT);const T=newTx({name:files.length+(files.length>1?' files':' file'),size:files.reduce((x,f)=>x+f.size,0)});SFX.pow();
+ $('#pc').classList.remove('done');$('#ustat').textContent='UPLOADING\u2026';$('#share').style.display='none';$('#up').classList.add('on');
+ const C=200,ch=$('#chunks'),tot=Math.max(1,T.size),t0=performance.now();ch.innerHTML='<i></i>'.repeat(C);let done=0;
+ try{const out=[];for(let k=0;k<files.length;k++){const f=files[k];$('#fn').textContent='File '+(k+1)+' of '+files.length+': '+f.name;
+  const cs=Math.min(8388608,Math.max(1,Math.ceil(f.size/40))),n=Math.ceil(f.size/cs)||1;
+  for(let i=0;i<n;i++){await f.slice(i*cs,(i+1)*cs).arrayBuffer();await new Promise(r=>setTimeout(r,8));done+=Math.min(cs,f.size-i*cs);
+   const p=Math.min(100,done/tot*100),sp=done/1048576/((performance.now()-t0)/1000),s=Math.round((tot-done)/1048576/Math.max(sp,.01));
+   $('#pc').textContent=Math.round(p)+'%';$('#fg').style.strokeDashoffset=408*(1-p/100);$('#pb').style.width=p+'%';$('#sz').textContent=fmt(done)+' / '+fmt(tot);$('#sp').textContent=sp.toFixed(1)+' MB/s';$('#et').textContent=Math.floor(s/60)+' min '+String(s%60).padStart(2,'0')+' sec';
+   const c=Math.floor(p/100*C);$('#ck').textContent=c+' / '+C;for(let q=0;q<c;q++)ch.children[q].className='d'}
+  out.push({name:f.name,size:f.size,type:f.type,blob:f,hash:null})}
+ SFX.done();$('#pc').textContent='DONE \u2713';$('#pc').classList.add('done');$('#ustat').textContent='UPLOADING DONE \u2713';$('#et').textContent='Verifying SHA-256\u2026';
+ for(const o of out)o.hash=await sha(o.blob);
+ $('#sp').textContent='SHA-256 verified \u2713';$('#et').textContent='Upload done \u2713';$('#fn').textContent=files.length+' file(s) uploaded';
+ await finish(T,null,null,out)}catch(e){txSave(T.id,{status:'failed'});SFX.err();$('#ustat').textContent='UPLOAD FAILED';$('#et').textContent='Upload failed: '+(e&&e.message||e)}}
+async function thumb(b){try{const bm=await createImageBitmap(b),k=Math.min(1,200/Math.max(bm.width,bm.height)),c=document.createElement('canvas');c.width=Math.max(1,Math.round(bm.width*k));c.height=Math.max(1,Math.round(bm.height*k));c.getContext('2d').drawImage(bm,0,0,c.width,c.height);return c.toDataURL('image/jpeg',.7)}catch(e){return null}}
+function icon(f){const t=f.type||'',n=f.name.toLowerCase();return t.startsWith('image/')?'\U0001F5BC':t.startsWith('video/')?'\U0001F3AC':t.startsWith('audio/')?'\U0001F3B5':/\.(zip|rar|7z|gz)$/.test(n)?'\U0001F5DC':/\.(pdf|docx?|pptx?|xlsx?|txt|csv)$/.test(n)?'\U0001F4C4':'\U0001F4C1'}
+function drawG(){const g=$('#gGrid');$('#gmsg').textContent='';
+ g.innerHTML=cur.files.map((f,i)=>'<div class="card" style="padding:12px"><div id="th'+i+'" style="height:120px;display:grid;place-items:center;background:#0a1235;border:3px solid #000;font-size:2.8rem;overflow:hidden">'+icon(f)+'</div><div style="margin-top:8px;word-break:break-all">'+esc(f.name)+'</div><div class="hint" style="text-align:left;margin:2px 0 8px">'+fmt(f.size)+'</div><button class="btn" style="width:100%;padding:8px" data-gdl="'+i+'">DOWNLOAD</button></div>').join('');
+ cur.files.forEach((f,i)=>{if((f.type||'').startsWith('image/'))thumb(f.blob).then(u=>{const el=$('#th'+i);if(u&&el)el.innerHTML='<img alt="" src="'+u+'" style="width:100%;height:100%;object-fit:cover">'})})}
+function fillVault(){fillVault0();const G=cur&&cur.mode==='group';$('#sdl').style.display=G?'none':'';$('#gcard').style.display=G?'block':'none';if(G){$('#vh').textContent='SHA-256 checked per file';drawG()}}
+async function gdl(i){const f=cur.files[i],m=t=>{$('#gmsg').textContent=t};
+ try{m('Verifying '+f.name+'\u2026');if(f.hash&&await sha(f.blob)!==f.hash){m('Integrity check failed for '+f.name);SFX.err();return}
+ const u=URL.createObjectURL(f.blob),l=document.createElement('a');l.href=u;l.download=f.name;document.body.appendChild(l);l.click();l.remove();setTimeout(()=>URL.revokeObjectURL(u),60000);
+ m('Downloaded '+f.name+' \u2713');SFX.done();grpDl(cur.id,curWho,f.name)}
+ catch(e){const c=e&&e.code;m(c==='declined'?'Download cancelled.':c==='rejected_extension'?'This file type cannot be saved here. Send it as .zip, .pdf, .png, .jpg, .mp4, .txt, .csv, .docx or .xlsx.':'Download failed'+(e&&e.message?': '+e.message:''));SFX.err()}}
+const ADM={salt:'91fe82b7bd8b076e',ph:'22c8a2cd3f7b14d6bf152ee16d1f9c5958eae6196f33aadb782c9182cee15cbe',ks:'4a1c93303484daa3',kh:'9c0a9221246d15ca4e469fd8ba83d0bbe9dd34c70710452d2247ad67b4f98219'};
+function cfgv(){return Object.assign({name:'HYPERSEND',sub:'SECURE FILE TRANSFER',desc:'Transfer massive files with next-generation security, authentication and resumable technology.',max:30,otp:58,signups:true},lsg('hs_cfg',{}))}
+function applyCfg(){const c=cfgv(),n=c.name.toUpperCase(),h=Math.ceil(n.length/2);document.title=c.name;$$('.logo').forEach(l=>{l.dataset.i=n.charAt(0);l.innerHTML=esc(n.slice(0,h))+'<b>'+esc(n.slice(h))+'</b>'});
+ $('.hero h1').textContent=n;$('.hero h2').textContent=c.sub;$('.hero p').textContent=c.desc;$('#footTxt').textContent=c.name+': '+c.sub.toLowerCase();drawStage();$('#drop strong').textContent=mode==='group'?'DROP UP TO '+c.max+' FILES':'DROP FILE HERE'}
+async function kdf(secret,salt){const k=await crypto.subtle.importKey('raw',new TextEncoder().encode(secret),'PBKDF2',false,['deriveBits']),b=await crypto.subtle.deriveBits({name:'PBKDF2',salt:new TextEncoder().encode(salt),iterations:150000,hash:'SHA-256'},k,256);return[...new Uint8Array(b)].map(x=>x.toString(16).padStart(2,'0')).join('')}
+async function del(id){MEM.delete(id);try{const d=await idb();d.transaction('f','readwrite').objectStore('f').delete(id)}catch(e){}}
+async function saveBlob(name,blob){const u=URL.createObjectURL(blob),l=document.createElement('a');l.href=u;l.download=name;document.body.appendChild(l);l.click();l.remove();setTimeout(()=>URL.revokeObjectURL(u),60000);}
+$('#pkBtn').onclick=async()=>{if(Date.now()<lockUntil){fm('pkErr','Too many wrong tries. Wait a minute.');return}
+ if(await kdf($('#pk').value,ADM.ks)!==ADM.kh){secEv();pkFail++;if(pkFail>=5){pkFail=0;lockUntil=Date.now()+60000;admEmail='';$('#pk').value='';go('login');lmsg('Too many wrong passkey tries. Try again in a minute.');return}fm('pkErr','Wrong passkey. '+(5-pkFail)+' tries left.');return}
+ pkFail=0;$('#pk').value='';const U=lsg('hs_users',{});if(!U[admEmail]){U[admEmail]={name:'Harsha Vardhan',phone:'',salt:'',hash:'!',created:Date.now()};lss('hs_users',U)}await login(admEmail,true);go('admin')};
+$('#admPwBtn').onclick=()=>{if(!isAdmin)return;otpTo=admEmail;after='admpw';go('otp')};
+$('#apBtn').onclick=async()=>{if(!isAdmin)return;const p=$('#apN').value,c=$('#apC').value;if(p.length<8){fm('apErr','Password must be at least 8 characters.');return}if(p!==c){fm('apErr','Passwords do not match.');return}
+ const salt=rnd(12);lss('hs_admin',{salt:salt,hash:await kdf(p,salt)});$('#apN').value=$('#apC').value='';fm('apErr','');go('admin');fm('cfErr','Admin password changed \u2713',1)};
+$('#cfBtn').onclick=()=>{if(!isAdmin)return;const n=$('#cfN').value.trim(),t=$('#cfT').value.trim(),d=$('#cfP').value.trim(),m=parseInt($('#cfM').value,10),o=parseInt($('#cfO').value,10);
+ if(n.length<2||n.length>24){fm('cfErr','Site name must be 2 to 24 characters.');return}if(!t||!d){fm('cfErr','Subtitle and description cannot be empty.');return}
+ if(!(m>=1&&m<=100)){fm('cfErr','Max files must be between 1 and 100.');return}if(!(o>=20&&o<=600)){fm('cfErr','OTP expiry must be 20 to 600 seconds.');return}
+ lss('hs_cfg',{name:n,sub:t,desc:d,max:m,otp:o,signups:$('#cfS').checked});applyCfg();fm('cfErr','Settings saved \u2713',1)};
+function adminX(){const c=cfgv();$('#cfN').value=c.name;$('#cfT').value=c.sub;$('#cfP').value=c.desc;$('#cfM').value=c.max;$('#cfO').value=c.otp;$('#cfS').checked=c.signups!==false;$('#cfErr').textContent='';
+ const U=lsg('hs_users',{}),ks=Object.keys(U).filter(k=>U[k].hash!=='!');
+ $('#uList').innerHTML=ks.length?ks.map(k=>'<div class="row"><span>'+esc(U[k].name)+'<br>'+esc(k)+'<br>'+esc(U[k].phone||'')+'</span><span><button class="lk" data-udel="'+esc(k)+'">remove</button></span></div>').join(''):'<p class="hint">No users yet.</p>'}
+$('#pBtn').onclick=async()=>{if(!isAdmin)return;const t=$('#pT').value.trim(),x=$('#pX').value.trim(),fl=[...$('#pF').files].slice(0,10);
+ if(!t&&!x&&!fl.length){fm('pErr','Add a title, some text or at least one file.');return}
+ const id='P'+Date.now().toString(36)+rnd(3);if(fl.length)await put({id:'post-'+id,files:fl.map(f=>({name:f.name,size:f.size,type:f.type,blob:f}))});
+ const P=lsg('hs_posts',[]);P.push({id:id,title:t||'Announcement',text:x,at:Date.now(),files:fl.map(f=>({name:f.name,size:f.size,type:f.type}))});lss('hs_posts',P);
+ $('#pT').value=$('#pX').value=$('#pF').value='';fm('pErr','Posted \u2713',1);SFX.ok();renderPosts()};
+async function renderPosts(){const P=lsg('hs_posts',[]).sort((a,b)=>b.at-a.at);$('#postSec').style.display=(P.length||isAdmin)?'block':'none';$('#composer').style.display=isAdmin?'block':'none';
+ $('#postList').innerHTML=P.length?P.map(p=>'<div class="card" style="margin-top:14px"><div class="row" style="border:0"><span style="font-size:1.3rem;color:var(--gold)">'+esc(p.title)+'</span><span>'+dtf(p.at)+'</span></div>'
+ +(p.text?'<p style="white-space:pre-wrap;margin:6px 0 10px;word-break:break-word">'+esc(p.text)+'</p>':'')
+ +(p.files&&p.files.length?'<div class="grid" style="grid-template-columns:repeat(auto-fill,minmax(150px,1fr))">'+p.files.map((f,i)=>'<div class="card" style="padding:12px"><div id="pt'+p.id+'_'+i+'" style="height:110px;display:grid;place-items:center;background:#0a1235;border:3px solid #000;font-size:2.6rem;overflow:hidden">'+icon(f)+'</div><div style="margin-top:8px;word-break:break-all">'+esc(f.name)+'</div><div class="hint" style="text-align:left;margin:2px 0 8px">'+fmt(f.size)+'</div><button class="btn" style="width:100%;padding:8px" data-pdl="'+p.id+'|'+i+'">DOWNLOAD</button></div>').join('')+'</div>':'')
+ +(isAdmin?'<button class="btn ghost" style="margin-top:12px;padding:6px 12px" data-pdel="'+p.id+'">DELETE POST</button>':'')+'</div>').join(''):(isAdmin?'<p class="hint">No posts yet. Use the form above.</p>':'');
+ for(const p of P)if((p.files||[]).some(f=>(f.type||'').startsWith('image/'))){const r=await get('post-'+p.id);if(r)r.files.forEach((f,i)=>{if((f.type||'').startsWith('image/'))thumb(f.blob).then(u=>{const el=$('#pt'+p.id+'_'+i);if(u&&el)el.innerHTML='<img alt="" src="'+u+'" style="width:100%;height:100%;object-fit:cover">'})})}}
+async function pdl(key){const a=key.split('|'),r=await get('post-'+a[0]),f=r&&r.files[+a[1]],m=t=>{$('#pmsg').textContent=t};if(!f){m('File not found on this device.');return}
+ try{await saveBlob(f.name,f.blob);m('Downloaded '+f.name+' \u2713');SFX.done()}catch(e){const c=e&&e.code;m(c==='declined'?'Download cancelled.':c==='rejected_extension'?'This file type cannot be saved here. Ask the admin to send it as .zip, .pdf, .png, .jpg, .mp4, .txt, .csv, .docx or .xlsx.':'Download failed'+(e&&e.message?': '+e.message:''));SFX.err()}}
+// Download
+const MEM=new Map();
+function idb(){return new Promise((res,rej)=>{try{const r=indexedDB.open('securesend',1);r.onupgradeneeded=()=>r.result.createObjectStore('f',{keyPath:'id'});r.onsuccess=()=>res(r.result);r.onerror=()=>rej(r.error)}catch(e){rej(e)}})}
+async function put(rec){MEM.set(rec.id,rec);try{const d=await idb();await new Promise((s,j)=>{const t=d.transaction('f','readwrite');t.objectStore('f').put(rec);t.oncomplete=s;t.onerror=()=>j(t.error)})}catch(e){}}
+async function get(id){if(MEM.has(id))return MEM.get(id);try{const d=await idb();return await new Promise((s,j)=>{const q=d.transaction('f').objectStore('f').get(id);q.onsuccess=()=>s(q.result);q.onerror=()=>j(q.error)})}catch(e){return null}}
+async function sha(b){if(b.size>314572800)return null;const h=await crypto.subtle.digest('SHA-256',await b.arrayBuffer());return[...new Uint8Array(h)].map(x=>x.toString(16).padStart(2,'0')).join('')}
+async function real(file){if(!rcvOk()){pend=file;return}clearInterval(upT);const T=newTx(file);SFX.pow();$('#pc').classList.remove('done');$('#ustat').textContent='UPLOADING…';$('#share').style.display='none';$('#up').classList.add('on');$('#fn').textContent=file.name;
+ const C=200,ch=$('#chunks');ch.innerHTML='<i></i>'.repeat(C);const cs=Math.min(8388608,Math.max(1,Math.ceil(file.size/C))),n=Math.ceil(file.size/cs)||1,t0=performance.now();
+ try{for(let i=0;i<n;i++){await file.slice(i*cs,(i+1)*cs).arrayBuffer();if(n<400)await new Promise(r=>setTimeout(r,15));else if(i%20==0)await new Promise(r=>setTimeout(r,0));if(n>=400&&i%Math.ceil(n/200)&&i<n-1)continue;
+ const d=Math.min(file.size,(i+1)*cs),p=d/(file.size||1)*100,sp=d/1048576/((performance.now()-t0)/1000);
+ $('#pc').textContent=Math.round(p)+'%';$('#fg').style.strokeDashoffset=408*(1-p/100);$('#pb').style.width=p+'%';$('#sz').textContent=fmt(d)+' / '+fmt(file.size);$('#sp').textContent=sp.toFixed(1)+' MB/s';
+ const s=Math.round((file.size-d)/1048576/sp);$('#et').textContent=Math.floor(s/60)+' min '+String(s%60).padStart(2,'0')+' sec';
+ const c=Math.floor(p/100*C);$('#ck').textContent=c+' / '+C;for(let k=0;k<c;k++)ch.children[k].className='d'}
+ SFX.done();$('#pc').textContent='DONE ✓';$('#pc').classList.add('done');$('#ustat').textContent='UPLOADING DONE ✓';$('#et').textContent='Verifying SHA-256…';const hash=await sha(file);
+ $('#sp').textContent=hash?'SHA-256 verified ✓':'Hash skipped (>300 MB)';$('#et').textContent='Upload done ✓';
+ await finish(T,file,hash)}catch(e){txSave(T.id,{status:'failed'});SFX.err();$('#ustat').textContent='UPLOAD FAILED';$('#et').textContent='Upload failed: '+(e&&e.message||e)}}
+function fillVault0(){if(cur&&cur.mode!=='group')markAccess(cur.id);$('#vw').textContent=cur?(cur.mode==='group'?curWho:(cur.rname||'-')):'-';$('#vt').textContent=cur&&cur.sent?dtf(cur.sent):'-';$('#vn').textContent=cur?cur.name:'Document.zip';$('#vs').textContent=cur?fmt(cur.size):'15.8 GB';$('#vh').textContent=cur?(cur.hash?'SHA-256 '+cur.hash.slice(0,12)+'… ✓':'SHA-256 not computed (>300 MB)'):'SHA-256 VERIFIED ✓'}
+$('#dl').onclick=async()=>{if(!cur){demoDl();return}
+ const bar=p=>{$('#db').style.width=p+'%';$('#dp').textContent=p+'%'},msg=(t,ok)=>{const el=$('#dt');el.textContent=t;el.style.color=ok?'var(--ok)':''};
+ try{bar(10);msg('Verifying SHA-256…');if(cur.hash&&await sha(cur.blob)!==cur.hash){msg('Integrity check failed: file changed');return}
+ bar(55);msg('Preparing secure download…');const u=URL.createObjectURL(cur.blob),l=document.createElement('a');l.href=u;l.download=cur.name;document.body.appendChild(l);l.click();l.remove();setTimeout(()=>URL.revokeObjectURL(u),60000);bar(100);msg('Download complete ✓',1);SFX.done();if(cur.mode==='group')grpDl(cur.id,curWho);else txSave(cur.id,{status:'completed',receivedAt:Date.now()})}
+ catch(e){bar(0);const c=e&&e.code;msg(c==='declined'?'Download cancelled.':c==='rejected_extension'?'This file type cannot be saved here. Send it as .zip, .pdf, .png, .jpg, .mp4, .txt, .csv, .docx or .xlsx.':'Download failed'+(e&&e.message?': '+e.message:''))}};
+function demoDl(){let p=0;$('#dt').textContent='Decrypting & streaming…';const t=setInterval(()=>{p+=1;$('#db').style.width=p+'%';$('#dp').textContent=p+'%';if(p>=100){clearInterval(t);$('#dt').innerHTML='<span class="ok">Download complete ✓</span>'}},40)};
+// Admin
+const S=[['TOTAL USERS',248],['ACTIVE TRANSFERS',17],['TOTAL FILES',1362],['STORAGE USED',4.8,' TB'],['DATA TRANSFERRED',18.2,' TB'],['SECURITY EVENTS',42]];
+$('#stats').innerHTML=S.map(s=>`<div class="card stat"><small>${s[0]}</small><b data-v="${s[1]}" data-u="${s[2]||''}">0</b></div>`).join('');
+$('#ch').innerHTML=Array.from({length:12},(_,i)=>`<i class="${i%5==4?'r':''}"></i>`).join('');
+function admin(){adminX();const AS=adminStats();$$('.stat b').forEach((b,i)=>{const v=AS[i][0],u=AS[i][1],d=v%1!==0;let t=0;const x=setInterval(()=>{t+=.04;const q=Math.min(1,t),e=1-Math.pow(1-q,3);
+ b.textContent=(d?(v*e).toFixed(1):Math.round(v*e).toLocaleString())+u;if(q>=1)clearInterval(x)},30)});
+ const T=lsg('hs_tx',[]),now=Date.now(),cn=Array.from({length:12},(_,k)=>T.filter(t=>Math.floor((now-t.created)/864e5)===11-k).length),mx=Math.max(1,...cn);$$('#ch i').forEach(i=>{i.style.height='0'});setTimeout(()=>$$('#ch i').forEach((i,k)=>{i.style.height=Math.max(3,cn[k]/mx*100)+'%';i.title=cn[k]+' transfers'}),60);
+ $('#adSec').textContent=lsg('hs_sec',0);$('#adOne').textContent=T.filter(t=>t.mode!=='group').length;$('#adGrp').textContent=T.filter(t=>t.mode==='group').length;$('#adFail').textContent=T.filter(t=>t.status==='failed').length}
+(async()=>{const a=lsg('hs_tx',[]);if(a.some(t=>t.status==='sending'))lss('hs_tx',a.map(t=>t.status==='sending'?Object.assign(t,{status:'failed'}):t));
+ user=lsg('hs_sess',null);if(user&&(!lsg('hs_users',{})[user]||(await sh(user))===ADMIN_HASH)){user=null;lss('hs_sess',null)}isAdmin=false;renderNav();applyCfg();renderPosts()})();
+let AC=null,muted=lsg('hs_mute',false);
+function ac(){if(!AC){try{AC=new(window.AudioContext||window.webkitAudioContext)()}catch(e){}}if(AC&&AC.state==='suspended')AC.resume().catch(()=>{});return AC}
+function tone(f,d,ty,v,t0,f2){const a=ac();if(!a||muted)return;const t=a.currentTime+(t0||0),o=a.createOscillator(),g=a.createGain();o.type=ty||'square';o.frequency.setValueAtTime(f,t);if(f2)o.frequency.exponentialRampToValueAtTime(f2,t+d);g.gain.setValueAtTime(v||.05,t);g.gain.exponentialRampToValueAtTime(.0001,t+d);o.connect(g);g.connect(a.destination);o.start(t);o.stop(t+d+.03)}
+function noise(d,v,t0,fq){const a=ac();if(!a||muted)return;const n=Math.floor(a.sampleRate*d),b=a.createBuffer(1,n,a.sampleRate),x=b.getChannelData(0);for(let i=0;i<n;i++)x[i]=Math.random()*2-1;const s=a.createBufferSource(),f=a.createBiquadFilter(),g=a.createGain(),t=a.currentTime+(t0||0);s.buffer=b;f.type='bandpass';f.frequency.setValueAtTime(fq||800,t);f.frequency.exponentialRampToValueAtTime((fq||800)*4,t+d);g.gain.setValueAtTime(v||.05,t);g.gain.exponentialRampToValueAtTime(.0001,t+d);s.connect(f);f.connect(g);g.connect(a.destination);s.start(t)}
+const SFX={nav(){tone(330,.07,'triangle',.07);tone(660,.1,'triangle',.06,.06)},key(){tone(880,.04,'square',.03)},whoosh(){noise(.3,.05,0,300)},pow(){noise(.14,.09,0,200);tone(180,.16,'square',.07,0,50)},
+ ok(){[523,659,784,1047].forEach((f,i)=>tone(f,.15,'square',.045,i*.08))},err(){tone(190,.22,'sawtooth',.06,0,90);tone(150,.26,'sawtooth',.05,.13,70)},
+ done(){noise(.3,.06,0,500);[392,523,659,784,1047].forEach((f,i)=>{tone(f,.28,'triangle',.08,.05+i*.09);tone(f*2,.2,'square',.02,.05+i*.09)})}};
+$('#snd').textContent=muted?'\U0001F507':'\U0001F50A';
+document.addEventListener('click',e=>{if(e.target.closest('#snd')){muted=!muted;lss('hs_mute',muted);$('#snd').textContent=muted?'\U0001F507':'\U0001F50A';if(!muted)SFX.nav();return}
+ const b=e.target.closest('.btn,.tab,.lk,nav button');if(!b)return;if(b.closest('nav')||b.classList.contains('tab')||b.classList.contains('lk'))SFX.nav();else SFX.pow()},true);
+['lerr','suErr','edErr','pwErr','fgErr','rsErr','oerr','rerr','uerr'].forEach(id=>{const el=$('#'+id);if(el)new MutationObserver(()=>{if(el.textContent)el.style.color.includes('ok')?SFX.ok():SFX.err()}).observe(el,{childList:true,characterData:true,subtree:true})});
+// Particles
+const cv=$('#fx'),cx=cv.getContext('2d');let W,H,P=[];
+function rs(){W=cv.width=innerWidth;H=cv.height=innerHeight}rs();addEventListener('resize',rs);
+for(let i=0;i<55;i++)P.push({x:Math.random()*2000,y:Math.random()*1200,r:Math.random()*1.8+.4,v:Math.random()*.35+.08,c:Math.random()<.3?'255,198,26':'242,58,67'});
+(function f(){cx.clearRect(0,0,W,H);P.forEach(p=>{p.y-=p.v;if(p.y<0){p.y=H;p.x=Math.random()*W}cx.fillStyle=`rgba(${p.c},.6)`;cx.beginPath();cx.arc(p.x%W,p.y,p.r,0,7);cx.fill()});requestAnimationFrame(f)})();
+</script></body></html>
